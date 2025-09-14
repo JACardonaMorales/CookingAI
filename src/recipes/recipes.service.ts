@@ -1,33 +1,31 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Recipe } from './interfaces/recipe.interface';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Recipe } from './entities/recipe.entity';
 import { CreateRecipeDto } from './dto/create-recipe.dto';
 
 @Injectable()
-export class RecipesService   {
-private readonly recipes: Recipe[] = [];
+export class RecipesService {
+  // Inyecta el repositorio de la entidad Recipe
+  constructor(
+    @InjectRepository(Recipe)
+    private recipesRepository: Repository<Recipe>,
+  ) {}
 
-  create(recipe: CreateRecipeDto): Recipe {
-    const newRecipe: Recipe = {
-      id: this.recipes.length + 1,
-      ...recipe,
-    };
-    this.recipes.push(newRecipe);
-    return newRecipe;
+  findAll(): Promise<Recipe[]> {
+    return this.recipesRepository.find();
   }
 
-  findAll(): Recipe[] {
-    return this.recipes;
-  }
-
-  findOne(id: number): Recipe {
-    const recipe = this.recipes.find((recipe) => recipe.id === id);
-
+  async findOne(id: number): Promise<Recipe> {
+    const recipe = await this.recipesRepository.findOneBy({ id });
     if (!recipe) {
-      // Si no se encuentra la receta, lanza una excepción
-      throw new NotFoundException(`Recipe with ID "${id}" not found`);
+      throw new NotFoundException(`Recipe #${id} not found`);
     }
-
     return recipe;
   }
-}
 
+  create(createRecipeDto: CreateRecipeDto): Promise<Recipe> {
+    const newRecipe = this.recipesRepository.create(createRecipeDto);
+    return this.recipesRepository.save(newRecipe);
+  }
+}
