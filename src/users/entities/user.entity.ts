@@ -16,4 +16,7 @@ export class User {
 
   @Column({ default: true }) // Por defecto, el usuario está activo
   isActive: boolean;
+
+  @Column('simple-array', { nullable: true })
+  preferences: string[];
 }
