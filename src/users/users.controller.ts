@@ -1,22 +1,19 @@
-import { Controller, Get } from '@nestjs/common';
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  age: number;
-  isActive: boolean;
-}
+import { Controller, Get, Post, Body } from '@nestjs/common';
+import { UsersService } from './users.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { User } from './interfaces/user.interface';
 
 @Controller('users')
 export class UsersController {
-    private users: User[] = [
-        { id: 1, name: 'Alice', email: 'al@gmail.com', age: 28, isActive: true },
-    ];    
-    
+  constructor(private readonly usersService: UsersService) {}
 
-    @Get()
-    getUsers(): User[] {
-        return this.users;
-    }
+  @Post()
+  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+    return this.usersService.create(createUserDto);
+  }
+
+  @Get()
+  async findAll(): Promise<User[]> {
+    return this.usersService.findAll();
+  }
 }
