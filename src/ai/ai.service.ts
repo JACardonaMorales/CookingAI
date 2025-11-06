@@ -1,4 +1,3 @@
-// src/ai/ai.service.ts
 import { Injectable } from '@nestjs/common';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 

@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdatePreferencesDto } from './dto/update-preferences.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -20,12 +20,6 @@ export class UsersService {
     return this.usersRepository.find();
   }
 
-
-  async findOneByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
-  }
-
-
   async findOneById(id: number): Promise<User> {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) {
@@ -35,18 +29,37 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.findOneByEmail(createUserDto.email);
+    const existingUser = await this.usersRepository.findOne({
+      where: { email: createUserDto.email },
+    });
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
 
-    const newUser = this.usersRepository.create(createUserDto);
-    return this.usersRepository.save(newUser);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
+    const newUser = this.usersRepository.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
+
+    const savedUser = await this.usersRepository.save(newUser);
+    delete savedUser.password;
+    return savedUser;
   }
 
-    async updatePreferences(id: number, updatePreferencesDto: UpdatePreferencesDto): Promise<User> {
-    const user = await this.findOneById(id); // Reutilizamos el método que ya teníamos
+  async findByEmailWithPassword(email: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { email } });
+  }
+
+  async updatePreferences(
+    id: number,
+    updatePreferencesDto: any,
+  ): Promise<User> {
+    const user = await this.findOneById(id);
     user.preferences = updatePreferencesDto.preferences;
-    return this.usersRepository.save(user);
+    const updatedUser = await this.usersRepository.save(user);
+    delete updatedUser.password;
+    return updatedUser;
   }
 }

@@ -12,6 +12,9 @@ export class User {
   email: string;
 
   @Column()
+  password?: string;
+
+  @Column()
   age: number;
 
   @Column({ default: true }) // Por defecto, el usuario está activo
